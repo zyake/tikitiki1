@@ -9,10 +9,6 @@ import java.util.ResourceBundle;
 
 public class App {
 
-    public App() {
-        super();
-    }
-
     public static void main( String[] args ) throws Exception {
         ResourceBundle configs = ResourceBundle.getBundle("configs");
 
@@ -22,9 +18,8 @@ public class App {
 
         Server server = new Server(80);
         server.setHandler(new QueryTuningHandler());
+        server.start();
 
         new ServerWarmupThread(server).start();
-
-        server.start();
     }
 }

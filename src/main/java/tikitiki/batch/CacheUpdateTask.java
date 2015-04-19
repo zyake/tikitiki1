@@ -16,8 +16,9 @@ public class CacheUpdateTask extends TimerTask {
     }
 
     public void start() {
+        long oneDay = 24 * 3600 * 1000;
         Timer timer = new Timer(true);
-        timer.schedule(this, 24 * 3600, 24 * 3600);
+        timer.schedule(this, oneDay , oneDay);
     }
 
     @Override
