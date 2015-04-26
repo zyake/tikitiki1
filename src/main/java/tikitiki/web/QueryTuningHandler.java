@@ -38,10 +38,11 @@ public class QueryTuningHandler extends AbstractHandler {
         }
 
         response.setContentType("text/html");
+        response.setHeader("Content-Encoding", "gzip");
         response.setCharacterEncoding("utf-8");
         response.setStatus(HttpServletResponse.SC_OK);
-        String cacheValue = CacheManager.getInstance().get(number);
-        response.getWriter().write(cacheValue);
+        byte[] cacheValue = CacheManager.getInstance().get(number);
+        response.getOutputStream().write(cacheValue);
         request.setHandled(true);
     }
 

@@ -1,19 +1,17 @@
 package tikitiki.batch;
 
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
-import org.xml.sax.helpers.XMLFilterImpl;
 import tikitiki.repository.VisitLogRepository;
 import tikitiki.util.CacheManager;
 
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.zip.GZIPOutputStream;
 
 public class CacheUpdateTask extends TimerTask {
 
@@ -49,7 +47,8 @@ public class CacheUpdateTask extends TimerTask {
                 String outputHTML = renderHTML(resultSet);
                 // preタグ無視！ 頭が悪すぎる最適化。
                 String cleanedOutput = outputHTML.replaceAll("\\r\\n", "").replaceAll(">\\s+<", "><");
-                cacheMap.put(Integer.toString(i), cleanedOutput);
+                byte[] compressedOutput = compress(cleanedOutput);
+                cacheMap.put(Integer.toString(i), compressedOutput);
             }
             CacheManager.replaceAtomically(cacheMap);
         } catch (Exception e) {
@@ -57,6 +56,20 @@ public class CacheUpdateTask extends TimerTask {
         }
 
         System.out.println("end batch." + new Date());
+    }
+
+    private byte[] compress(String cleanedOutput) {
+        try {
+            ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream();
+            GZIPOutputStream outputStream = new GZIPOutputStream(arrayOutputStream);
+            outputStream.write(cleanedOutput.getBytes());
+            outputStream.flush();
+            outputStream.close();
+            arrayOutputStream.flush();
+             return arrayOutputStream.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private String renderHTML(List<Map<String, Object>> resultSet) {
