@@ -4,15 +4,14 @@ import org.eclipse.jetty.server.Server;
 
 import java.net.URL;
 
-public class ServerWarmupThread extends Thread {
+public class ServerWarmupRunner {
 
     private final Server server;
 
-    public ServerWarmupThread(Server server) {
+    public ServerWarmupRunner(Server server) {
         this.server = server;
     }
 
-    @Override
     public void run() {
         while (!server.isStarted()) {
             try {
@@ -23,12 +22,15 @@ public class ServerWarmupThread extends Thread {
         }
 
         System.out.println("start warm up...");
-        //  一回やれば十分っぽい。
-        try {
-            URL url = new URL(server.getURI() + "tikitiki/query_tuning/1");
-            url.getContent();
-        } catch (java.io.IOException e) {
-            throw new RuntimeException(e);
+        for (int i = 1 ;  i < 100 ; i ++) {
+          for (int j = 0 ; j < 10 ; j ++) {
+              try {
+                  URL url = new URL(server.getURI() + "tikitiki/query_tuning/" + i);
+                  url.getContent();
+              } catch (java.io.IOException e) {
+                  throw new RuntimeException(e);
+              }
+          }
         }
         System.out.println("end warm up.");
     }

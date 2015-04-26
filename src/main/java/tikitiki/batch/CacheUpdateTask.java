@@ -1,25 +1,28 @@
 package tikitiki.batch;
 
+import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
+import org.xml.sax.helpers.XMLFilterImpl;
 import tikitiki.repository.VisitLogRepository;
 import tikitiki.util.CacheManager;
 
-import javax.rmi.PortableRemoteObject;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.StringWriter;
-import java.sql.*;
 import java.util.*;
-import java.util.Date;
 
 public class CacheUpdateTask extends TimerTask {
 
-    private final String jdbcUrl;
+    private final VisitLogRepository repository;
 
     private final VelocityEngine engine;
 
-    public CacheUpdateTask(String jdbcUrl) {
-        this.jdbcUrl = jdbcUrl;
+    public CacheUpdateTask(VisitLogRepository repository) {
+        this.repository = repository;
         this.engine = new VelocityEngine();
         Properties properties = new Properties();
         properties.put("resource.loader", "class");
@@ -39,14 +42,14 @@ public class CacheUpdateTask extends TimerTask {
     public void run() {
         System.out.println("start batch..." + new Date());
 
-        try (VisitLogRepository repository = newRepository()) {
+        try (VisitLogRepository repository = this.repository) {
             Map<String, Object> cacheMap = new HashMap<>();
             for ( int i = 1 ; i <= 100; i ++ ) {
                 List<Map<String, Object>> resultSet = repository.queryByCondition(i);
                 String outputHTML = renderHTML(resultSet);
-                // preタグ無視！
-                String cleanedOutput = outputHTML.replaceAll("\\r\\n", "");
-                cacheMap.put(Integer.toString(i), cleanedOutput.getBytes());
+                // preタグ無視！ 頭が悪すぎる最適化。
+                String cleanedOutput = outputHTML.replaceAll("\\r\\n", "").replaceAll(">\\s+<", "><");
+                cacheMap.put(Integer.toString(i), cleanedOutput);
             }
             CacheManager.replaceAtomically(cacheMap);
         } catch (Exception e) {
@@ -56,13 +59,20 @@ public class CacheUpdateTask extends TimerTask {
         System.out.println("end batch." + new Date());
     }
 
-    private VisitLogRepository newRepository() throws SQLException {
-        return new VisitLogRepository(DriverManager.getConnection(jdbcUrl));
-    }
-
     private String renderHTML(List<Map<String, Object>> resultSet) {
+        // result set内の全項目をエスケープ
+        List<Map<String, String>> escapedResultSet = new ArrayList<>();
+        for (Map<String, Object> map  : resultSet) {
+            Map<String, String> escapedValueMap = new HashMap<>();
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                String escapedValue = StringUtils.replaceEach(entry.getValue().toString(), new String[]{"&", "\"", "<", ">"}, new String[]{"&amp;", "&quot;", "&lt;", "&gt;"}).trim();
+                escapedValueMap.put(entry.getKey(), escapedValue);
+            }
+            escapedResultSet.add(escapedValueMap);
+        }
+
         VelocityContext context = new VelocityContext();
-        context.put("resultSet", resultSet);
+        context.put("resultSet", escapedResultSet);
 
         StringWriter stringWriter = new StringWriter();
         Template template = engine.getTemplate("query_tuning.vm", "UTF-8");

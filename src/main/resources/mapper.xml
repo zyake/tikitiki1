@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="tikitiki.repository.VisitLogRepository">
+    <select id="selectVisitLogs" resultType="Map">
+        SELECT v.id, u.name as user_name, h.name as hotel_name, date
+                    FROM visit_logs v
+                    INNER JOIN hotels h ON v.hotel_id = h.id
+                    INNER JOIN users u ON v.user_id = u.id
+                    WHERE v.del_flg = 0 AND u.del_flg = 0 AND h.del_flg = 0
+        <choose>
+            <when test="condition &lt;= 50">
+                LIMIT ${limit_lower}, 1000
+            </when>
+            <when test="50 &lt; condition &amp;&amp; condition &lt;= 75">
+                AND u.id = #{user_id} LIMIT 0, 300
+            </when>
+            <when test="75 &lt; condition &amp;&amp; condition &lt;= 100">
+                 AND h.id = #{hotel_id} LIMIT 0, 300
+            </when>
+        </choose>
+    </select>
+</mapper>

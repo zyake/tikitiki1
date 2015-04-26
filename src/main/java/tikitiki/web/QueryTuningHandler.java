@@ -15,24 +15,17 @@ public class QueryTuningHandler extends AbstractHandler {
 
     private static final Pattern PATTERN = Pattern.compile("^/tikitiki/query_tuning/\\d+$");
 
-    private byte[] css;
-
-    private byte[] errorHtml;
+    private String errorHtml;
 
     @Override
     protected void doStart() throws Exception {
         super.doStart();
-        css = ClassPathResourceLoader.load("style.css").getBytes();
-        errorHtml = ClassPathResourceLoader.load("error.html").getBytes();
+        errorHtml = ClassPathResourceLoader.load("error.html");
     }
 
     @Override
     public void handle(String target, Request request, HttpServletRequest httpServletRequest, HttpServletResponse response) throws IOException, ServletException {
         if (!PATTERN.matcher(target).find()) {
-            if (target.equals("/lib/css/style.css")) {
-                responseCSS(request, response);
-                return;
-            }
             responseError(request, response);
             return;
         }
@@ -47,16 +40,8 @@ public class QueryTuningHandler extends AbstractHandler {
         response.setContentType("text/html");
         response.setCharacterEncoding("utf-8");
         response.setStatus(HttpServletResponse.SC_OK);
-        byte[] cacheValue = CacheManager.getInstance().get(number);
-        response.getOutputStream().write(cacheValue);
-        request.setHandled(true);
-    }
-
-    private void responseCSS(Request request, HttpServletResponse response) throws IOException {
-        response.setContentType("text/css");
-        response.setCharacterEncoding("utf-8");
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.getOutputStream().write(css);
+        String cacheValue = CacheManager.getInstance().get(number);
+        response.getWriter().write(cacheValue);
         request.setHandled(true);
     }
 
@@ -64,7 +49,7 @@ public class QueryTuningHandler extends AbstractHandler {
         response.setContentType("text/html");
         response.setCharacterEncoding("utf-8");
         response.setStatus(HttpServletResponse.SC_OK);
-        response.getOutputStream().write(errorHtml);
+        response.getWriter().write(errorHtml);
         request.setHandled(true);
     }
 }
