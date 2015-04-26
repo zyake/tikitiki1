@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ja">
+<head>
+        <meta charset="UTF-8">
+        <title>AACon1</title>
+        <link rel="stylesheet" href="/lib/css/style.css"/>
+    </head>
+<body>
+<header>
+        <h1>検索結果</h1>
+    </header>
+<article>
+</article>
+<table class="tbl">
+        <thead>
+        <tr>
+        <th>id</th><th>user.name</th><th>hotel.name</th><th>date</th>
+            </tr>
+        </thead>
+        <tbody>
+            #foreach ($result in $resultSet)
+                <tr>
+                    <td>$result.get("id")</td>
+                    <td>$result.get("user_name")</td>
+                    <td>$result.get("hotel_name")</td>
+                    <td>$result.get("date")</td>
+                </tr>
+            #end
+        </tbody>
+    </table>
+</body>
+</html>

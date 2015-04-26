@@ -15,24 +15,25 @@ public class QueryTuningHandler extends AbstractHandler {
 
     private static final Pattern PATTERN = Pattern.compile("^/tikitiki/query_tuning/\\d+$");
 
-    private String css;
+    private byte[] css;
 
-    private String errorHtml;
+    private byte[] errorHtml;
 
     @Override
     protected void doStart() throws Exception {
         super.doStart();
-        css = ClassPathResourceLoader.load("style.css");
-        errorHtml = ClassPathResourceLoader.load("error.html");
+        css = ClassPathResourceLoader.load("style.css").getBytes();
+        errorHtml = ClassPathResourceLoader.load("error.html").getBytes();
     }
 
     @Override
     public void handle(String target, Request request, HttpServletRequest httpServletRequest, HttpServletResponse response) throws IOException, ServletException {
         if (!PATTERN.matcher(target).find()) {
+            if (target.equals("/lib/css/style.css")) {
+                responseCSS(request, response);
+                return;
+            }
             responseError(request, response);
-            return;
-        } else if (target.equals("/lib/css/style.css")) {
-            responseCSS(request, response);
             return;
         }
 
@@ -46,8 +47,8 @@ public class QueryTuningHandler extends AbstractHandler {
         response.setContentType("text/html");
         response.setCharacterEncoding("utf-8");
         response.setStatus(HttpServletResponse.SC_OK);
-        String cacheValue = CacheManager.getInstance().get(number);
-        response.getWriter().write(cacheValue);
+        byte[] cacheValue = CacheManager.getInstance().get(number);
+        response.getOutputStream().write(cacheValue);
         request.setHandled(true);
     }
 
@@ -55,7 +56,7 @@ public class QueryTuningHandler extends AbstractHandler {
         response.setContentType("text/css");
         response.setCharacterEncoding("utf-8");
         response.setStatus(HttpServletResponse.SC_OK);
-        response.getWriter().write(css);
+        response.getOutputStream().write(css);
         request.setHandled(true);
     }
 
@@ -63,7 +64,7 @@ public class QueryTuningHandler extends AbstractHandler {
         response.setContentType("text/html");
         response.setCharacterEncoding("utf-8");
         response.setStatus(HttpServletResponse.SC_OK);
-        response.getWriter().write(errorHtml);
+        response.getOutputStream().write(errorHtml);
         request.setHandled(true);
     }
 }

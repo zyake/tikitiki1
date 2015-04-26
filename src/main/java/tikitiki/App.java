@@ -16,7 +16,7 @@ public class App {
         cacheUpdateTask.run();
         cacheUpdateTask.start();
 
-        Server server = new Server(80);
+        Server server = new Server(8080);
         server.setHandler(new QueryTuningHandler());
         server.start();
 
