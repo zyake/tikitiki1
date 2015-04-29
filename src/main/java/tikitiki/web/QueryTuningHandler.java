@@ -9,30 +9,32 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.regex.Pattern;
 
 public class QueryTuningHandler extends AbstractHandler {
 
-    private static final Pattern PATTERN = Pattern.compile("^/tikitiki/query_tuning/\\d+$");
+    private static final String PATTERN = "/tikitiki/query_tuning/";
 
     private String errorHtml;
+
+    private CacheManager manager;
 
     @Override
     protected void doStart() throws Exception {
         super.doStart();
         errorHtml = ClassPathResourceLoader.load("error.html");
+        manager = CacheManager.getInstance();
     }
 
     @Override
     public void handle(String target, Request request, HttpServletRequest httpServletRequest, HttpServletResponse response) throws IOException, ServletException {
-        if (!PATTERN.matcher(target).find()) {
+        if (!target.startsWith(PATTERN)) {
             responseError(request, response);
             return;
         }
 
         String number = target.substring(target.lastIndexOf("/") + 1);
-        int requestPattern = Integer.parseInt(number);
-        if (requestPattern < 1 || 100 < requestPattern) {
+        byte[] responseBytes = manager.get(number);
+        if (responseBytes == null) {
             responseError(request, response);
             return;
         }
@@ -41,8 +43,7 @@ public class QueryTuningHandler extends AbstractHandler {
         response.setHeader("Content-Encoding", "gzip");
         response.setCharacterEncoding("utf-8");
         response.setStatus(HttpServletResponse.SC_OK);
-        byte[] cacheValue = CacheManager.getInstance().get(number);
-        response.getOutputStream().write(cacheValue);
+        response.getOutputStream().write(responseBytes);
         request.setHandled(true);
     }
 
