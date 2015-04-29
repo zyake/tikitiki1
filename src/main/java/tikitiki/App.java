@@ -10,6 +10,7 @@ import tikitiki.web.QueryTuningServer;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ResourceBundle;
 
 public class App {
 
@@ -29,9 +30,8 @@ public class App {
         cacheUpdateTask.run();
         cacheUpdateTask.start();
 
-        String host = args.length == 1 ? args[0] : "localhost";
-
-        QueryTuningServer server = new QueryTuningServer(host, 80);
+        ResourceBundle settings = ResourceBundle.getBundle("settings");
+        QueryTuningServer server = new QueryTuningServer(settings.getString("server.host"), 80);
 
         new Thread(new ServerWarmupRunner(server)).start();
 

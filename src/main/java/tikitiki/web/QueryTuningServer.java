@@ -7,6 +7,7 @@ import tikitiki.util.Strings;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.channels.ServerSocketChannel;
@@ -73,6 +74,8 @@ public class QueryTuningServer {
     public void start() throws Exception {
         ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
         serverSocketChannel.bind(new InetSocketAddress(host, port));
+        System.out.println("server=" + serverSocketChannel.getLocalAddress());
+
         serverSocketChannel.configureBlocking(false);
         try {
             int methodCount;
@@ -145,11 +148,13 @@ public class QueryTuningServer {
                                 }
                                 if (number < 1 || 100 < number) {
                                     request.getOutputStream().write(errorHtmlBytes);
+                                    request.getOutputStream().flush();
                                     request.close();
                                     break OUTER;
                                 }
                                 byte[] outputBytes = cachedResponse[number];
                                 request.getOutputStream().write(outputBytes);
+                                request.getOutputStream().flush();
                                 request.close();
                                 break OUTER;
                             }
