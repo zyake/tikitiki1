@@ -42,21 +42,37 @@ public class CacheUpdateTask extends TimerTask {
         System.out.println("start batch..." + new Date());
 
         try (VisitLogRepository repository = this.repository) {
-            Map<String, Object> cacheMap = new HashMap<>();
+            byte[][] cache = new byte[101][];
             for ( int i = 1 ; i <= 100; i ++ ) {
                 List<Map<String, Object>> resultSet = repository.queryByCondition(i);
                 String outputHTML = renderHTML(resultSet);
-                // preタグ無視！ 頭が悪すぎる最適化。
-                String cleanedOutput = outputHTML.replaceAll("\\r\\n", "").replaceAll(">\\s+<", "><");
-                byte[] compressedOutput = Strings.compress(cleanedOutput);
-                cacheMap.put(Integer.toString(i), compressedOutput);
+                byte[] compressedOutput = createResponseBytes(outputHTML);
+                cache[i] = compressedOutput;
             }
-            CacheManager.replaceAtomically(cacheMap);
+            CacheManager.replaceAtomically(cache);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
         System.out.println("end batch." + new Date());
+    }
+
+    private byte[] createResponseBytes(String outputHTML) {
+        String cleanedOutput = outputHTML.replaceAll("\\r\\n", "").replaceAll(">\\s+<", "><");
+        byte[] compressedOutput = Strings.compress(cleanedOutput);
+        byte[] responseBytes = ("HTTP/1.1 200 OK\r\n" +
+                "Content-Type: text/html; charset=UTF-8\r\n" +
+                "Content-Encoding: gzip\r\n" +
+                "Content-Length: " + compressedOutput.length + "\r\n\r\n").getBytes();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try {
+            byteArrayOutputStream.write(responseBytes);
+            byteArrayOutputStream.write(compressedOutput);
+            byteArrayOutputStream.close();
+            return byteArrayOutputStream.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private String renderHTML(List<Map<String, Object>> resultSet) {

@@ -15,6 +15,29 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
+  <profiles>
+    <profile>
+      <id>product</id>
+      <properties>
+        <jdbc.url>jdbc:mysql://localhost/aacon1</jdbc.url>
+        <jdbc.user>root</jdbc.user>
+        <jdbc.password>password</jdbc.password>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>local</id>
+      <properties>
+        <jdbc.url>jdbc:mysql://192.168.33.30/aacon1</jdbc.url>
+        <jdbc.user>test</jdbc.user>
+        <jdbc.password>allied55</jdbc.password>
+      </properties>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+    </profile>
+  </profiles>
+
   <dependencies>
 
     <!-- JETTY DEPENDENCIES -->
@@ -78,6 +101,12 @@
   </dependencies>
 
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
