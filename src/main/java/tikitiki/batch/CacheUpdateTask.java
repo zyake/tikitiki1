@@ -6,6 +6,7 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import tikitiki.repository.VisitLogRepository;
 import tikitiki.util.CacheManager;
+import tikitiki.util.Strings;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -47,7 +48,7 @@ public class CacheUpdateTask extends TimerTask {
                 String outputHTML = renderHTML(resultSet);
                 // preタグ無視！ 頭が悪すぎる最適化。
                 String cleanedOutput = outputHTML.replaceAll("\\r\\n", "").replaceAll(">\\s+<", "><");
-                byte[] compressedOutput = compress(cleanedOutput);
+                byte[] compressedOutput = Strings.compress(cleanedOutput);
                 cacheMap.put(Integer.toString(i), compressedOutput);
             }
             CacheManager.replaceAtomically(cacheMap);
@@ -56,20 +57,6 @@ public class CacheUpdateTask extends TimerTask {
         }
 
         System.out.println("end batch." + new Date());
-    }
-
-    private byte[] compress(String cleanedOutput) {
-        try {
-            ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream();
-            GZIPOutputStream outputStream = new GZIPOutputStream(arrayOutputStream);
-            outputStream.write(cleanedOutput.getBytes());
-            outputStream.flush();
-            outputStream.close();
-            arrayOutputStream.flush();
-             return arrayOutputStream.toByteArray();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     private String renderHTML(List<Map<String, Object>> resultSet) {

@@ -4,6 +4,7 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import tikitiki.util.CacheManager;
 import tikitiki.util.ClassPathResourceLoader;
+import tikitiki.util.Strings;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -14,14 +15,14 @@ public class QueryTuningHandler extends AbstractHandler {
 
     private static final String PATTERN = "/tikitiki/query_tuning/";
 
-    private String errorHtml;
+    private byte[] errorHtmlBytes;
 
     private CacheManager manager;
 
     @Override
     protected void doStart() throws Exception {
         super.doStart();
-        errorHtml = ClassPathResourceLoader.load("error.html");
+        errorHtmlBytes = Strings.compress(ClassPathResourceLoader.load("error.html"));
         manager = CacheManager.getInstance();
     }
 
@@ -49,9 +50,10 @@ public class QueryTuningHandler extends AbstractHandler {
 
     private void responseError(Request request, HttpServletResponse response) throws IOException {
         response.setContentType("text/html");
+        response.setHeader("Content-Encoding", "gzip");
         response.setCharacterEncoding("utf-8");
         response.setStatus(HttpServletResponse.SC_OK);
-        response.getWriter().write(errorHtml);
+        response.getOutputStream().write(errorHtmlBytes);
         request.setHandled(true);
     }
 }
