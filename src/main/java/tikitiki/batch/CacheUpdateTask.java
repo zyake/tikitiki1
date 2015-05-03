@@ -6,6 +6,7 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import tikitiki.repository.VisitLogRepository;
 import tikitiki.util.CacheManager;
+import tikitiki.util.ClassPathResourceLoader;
 import tikitiki.util.Strings;
 
 import java.io.ByteArrayOutputStream;
@@ -40,12 +41,16 @@ public class CacheUpdateTask extends TimerTask {
     @Override
     public void run() {
         System.out.println("start batch..." + new Date());
-
+        String css = ClassPathResourceLoader.load("style.css")
+            .replaceAll("\\s+\\{\\s+ ", "{")
+            .replaceAll("\\s+}\\s+", "}")
+            .replaceAll(";\\s+", ";")
+            .replaceAll(":\\s+", ":");
         try (VisitLogRepository repository = this.repository) {
             byte[][] cache = new byte[101][];
             for ( int i = 1 ; i <= 100; i ++ ) {
                 List<Map<String, Object>> resultSet = repository.queryByCondition(i);
-                String outputHTML = renderHTML(resultSet);
+                String outputHTML = renderHTML(resultSet, css);
                 byte[] compressedOutput = createResponseBytes(outputHTML);
                 cache[i] = compressedOutput;
             }
@@ -63,6 +68,7 @@ public class CacheUpdateTask extends TimerTask {
         byte[] responseBytes = ("HTTP/1.1 200 OK\r\n" +
                 "Content-Type: text/html; charset=UTF-8\r\n" +
                 "Content-Encoding: gzip\r\n" +
+                "Connection: close\r\n" +
                 "Content-Length: " + compressedOutput.length + "\r\n\r\n").getBytes();
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try {
@@ -75,7 +81,7 @@ public class CacheUpdateTask extends TimerTask {
         }
     }
 
-    private String renderHTML(List<Map<String, Object>> resultSet) {
+    private String renderHTML(List<Map<String, Object>> resultSet, String css) {
         // result set内の全項目をエスケープ
         List<Map<String, String>> escapedResultSet = new ArrayList<>();
         for (Map<String, Object> map  : resultSet) {
@@ -89,6 +95,7 @@ public class CacheUpdateTask extends TimerTask {
 
         VelocityContext context = new VelocityContext();
         context.put("resultSet", escapedResultSet);
+        context.put("css", css);
 
         StringWriter stringWriter = new StringWriter();
         Template template = engine.getTemplate("query_tuning.vm", "UTF-8");

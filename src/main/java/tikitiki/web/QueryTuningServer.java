@@ -7,7 +7,7 @@ import tikitiki.util.Strings;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.Inet4Address;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.channels.ServerSocketChannel;
@@ -77,17 +77,17 @@ public class QueryTuningServer {
         System.out.println("server=" + serverSocketChannel.getLocalAddress());
 
         serverSocketChannel.configureBlocking(false);
-        try {
-            int methodCount;
-            int[] method = new int[3];
-            int firstLineParseState;
-            int relPathBytesCount;
-            int[] relPathBytes;
-            InputStream inputStream;
+        int methodCount;
+        int[] method = new int[3];
+        int firstLineParseState;
+        int relPathBytesCount;
+        int[] relPathBytes;
+        InputStream inputStream;
+        OutputStream outputStream;
 
-            isStarted = true;
-
-            while (true) {
+        isStarted = true;
+        while (true) {
+            try {
                 methodCount = 0;
                 relPathBytesCount = 0;
                 relPathBytes = new int[MAX_PATH_SIZE];
@@ -98,9 +98,11 @@ public class QueryTuningServer {
                 if (channel == null) {
                     continue;
                 }
-
                 Socket request = channel.socket();
+                request.setKeepAlive(false);
                 inputStream = request.getInputStream();
+                outputStream = request.getOutputStream();
+
                 int data;
                 OUTER:
                 while ((data = inputStream.read()) != -1) {
@@ -108,13 +110,12 @@ public class QueryTuningServer {
                         method[methodCount] = data;
                         methodCount++;
                         if (methodCount == 3) {
-                            if (method[0] == CHAR_G && method[1] == CHAR_E && method[2] == CHAR_T){
+                            if (method[0] == CHAR_G && method[1] == CHAR_E && method[2] == CHAR_T) {
                                 firstLineParseState++;
                                 // 空白の呼び飛ばし
                                 inputStream.read();
-                            }else{
-                                request.getOutputStream().write(errorHtmlBytes);
-                                request.close();
+                            } else {
+                                outputStream.write(errorHtmlBytes);
                                 break OUTER;
                             }
                         }
@@ -122,62 +123,58 @@ public class QueryTuningServer {
                         if (data == WHITE_SPACE) {
                             int numCount = relPathBytesCount - PATTERN_BYTES.length;
                             if (numCount == 0) {
-                                request.getOutputStream().write(errorHtmlBytes);
-                                request.close();
+                                outputStream.write(errorHtmlBytes);
                                 break OUTER;
                             } else {
                                 int number = 0;
-                                for (int i = 0 ; i < numCount; i ++) {
+                                for (int i = 0; i < numCount; i++) {
                                     int numberByte = relPathBytes[PATTERN_BYTES.length + i];
                                     if (MIN_NUMBER_CODE <= numberByte && numberByte <= MAX_NUMBER_CODE) {
                                         switch (numCount - i) {
                                             case 3:
                                                 number += (numberByte - MIN_NUMBER_CODE) * 100;
-                                            break;
+                                                break;
                                             case 2:
                                                 number += (numberByte - MIN_NUMBER_CODE) * 10;
-                                            break;
+                                                break;
                                             case 1:
                                                 number += numberByte - MIN_NUMBER_CODE;
                                         }
                                     } else {
-                                        request.getOutputStream().write(errorHtmlBytes);
-                                        request.close();
+                                        outputStream.write(errorHtmlBytes);
                                         break OUTER;
                                     }
                                 }
                                 if (number < 1 || 100 < number) {
-                                    request.getOutputStream().write(errorHtmlBytes);
-                                    request.getOutputStream().flush();
-                                    request.close();
+                                    outputStream.write(errorHtmlBytes);
+                                    outputStream.flush();
                                     break OUTER;
                                 }
                                 byte[] outputBytes = cachedResponse[number];
-                                request.getOutputStream().write(outputBytes);
-                                request.getOutputStream().flush();
-                                request.close();
+                                outputStream.write(outputBytes);
+                                outputStream.flush();
+                                request.shutdownOutput();
                                 break OUTER;
                             }
                         } else {
                             if (relPathBytesCount < PATTERN_BYTES.length) {
                                 if (data != PATTERN_BYTES[relPathBytesCount]) {
-                                    request.getOutputStream().write(errorHtmlBytes);
-                                    request.close();
+                                    outputStream.write(errorHtmlBytes);
                                     break OUTER;
                                 }
                             } else if (relPathBytesCount > MAX_PATH_SIZE) {
-                                request.getOutputStream().write(errorHtmlBytes);
-                                request.close();
+                                outputStream.write(errorHtmlBytes);
                                 break OUTER;
                             }
                             relPathBytes[relPathBytesCount++] = data;
                         }
                     }
                 }
+                request.shutdownInput();
+                request.shutdownOutput();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            serverSocketChannel.close();
-            System.err.println(e);
         }
     }
     public boolean isStarted() {
