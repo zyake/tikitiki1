@@ -147,13 +147,10 @@ public class QueryTuningServer {
                                 }
                                 if (number < 1 || 100 < number) {
                                     outputStream.write(errorHtmlBytes);
-                                    outputStream.flush();
                                     break OUTER;
                                 }
                                 byte[] outputBytes = cachedResponse[number];
                                 outputStream.write(outputBytes);
-                                outputStream.flush();
-                                request.shutdownOutput();
                                 break OUTER;
                             }
                         } else {
@@ -170,6 +167,7 @@ public class QueryTuningServer {
                         }
                     }
                 }
+                outputStream.flush();
                 request.shutdownInput();
                 request.shutdownOutput();
             } catch (Exception e) {
