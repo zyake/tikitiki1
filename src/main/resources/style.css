@@ -1,17 +1,17 @@
-* { margin: 0;  padding: 0;  }
-html,body {  height: 100%;  font-size: 16px;  }
-.tbl {  margin-bottom: 20px;  width: 100%;  border-collapse: separate;  border-radius: 7px;  background: #fff;  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); }
-.tbl thead tr:first-child > *:first-child {  border-bottom-left-radius: 0; }
-.tbl thead tr:first-child > *:last-child {  border-bottom-right-radius: 0; }
-.tbl thead + tbody tr:first-child > * {  border-top: none; }
-.tbl thead + tbody tr:first-child > *:first-child {  border-top-left-radius: 0; }
-.tbl thead + tbody tr:first-child > *:last-child {  border-top-right-radius: 0; }
-.tbl tr:first-child > * {  border-top: 1px solid #ccc; }
-.tbl tr:first-child > *:first-child {  border-top-left-radius: 7px; }
-.tbl tr:first-child > *:last-child {  border-top-right-radius: 7px; }
-.tbl tr:last-child > *:first-child {  border-bottom-left-radius: 7px; }
-.tbl tr:last-child > *:last-child {  border-bottom-right-radius: 7px; }
-.tbl th, .tbl td { position: relative; border-right: 1px solid #ccc;  border-bottom: 1px solid #ccc; }
-.tbl th:first-child, .tbl td:first-child {  border-left: 1px solid #ccc; }
-.tbl th { background: #F8F8FA; }
-.tbl .require1:before { margin-right: 5px; }
+*{margin: 0; padding: 0;}
+html,body{ height: 100%;  font-size: 16px;}
+.tbl{margin-bottom: 20px;  width: 100%; border-collapse: separate;  border-radius: 7px;  background: #fff;  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);}
+.tbl thead tr:first-child > *:first-child{border-bottom-left-radius: 0;}
+.tbl thead tr:first-child > *:last-child{  border-bottom-right-radius: 0;}
+.tbl thead + tbody tr:first-child > *{  border-top: none; }
+.tbl thead + tbody tr:first-child > *:first-child{border-top-left-radius: 0;}
+.tbl thead + tbody tr:first-child > *:last-child{border-top-right-radius: 0;}
+.tbl tr:first-child > *{border-top: 1px solid #ccc;}
+.tbl tr:first-child > *:first-child{border-top-left-radius: 7px;}
+.tbl tr:first-child > *:last-child{border-top-right-radius: 7px;}
+.tbl tr:last-child > *:first-child{border-bottom-left-radius: 7px;}
+.tbl tr:last-child > *:last-child{border-bottom-right-radius: 7px;}
+.tbl th, .tbl td{position: relative; border-right: 1px solid #ccc;  border-bottom: 1px solid #ccc;}
+.tbl th:first-child, .tbl td:first-child{border-left: 1px solid #ccc;}
+.tbl th{background: #F8F8FA;}
+.tbl .require1:before{margin-right: 5px;}

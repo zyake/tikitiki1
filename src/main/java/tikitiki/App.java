@@ -32,8 +32,10 @@ public class App {
 
         ResourceBundle settings = ResourceBundle.getBundle("settings");
         QueryTuningServer server = new QueryTuningServer(settings.getString("server.host"), 80);
-
-        new Thread(new ServerWarmupRunner(server)).start();
+        
+        Thread warmupThread  = new Thread(new ServerWarmupRunner(server));
+        warmupThread.setDaemon(true);
+        warmupThread.start();
 
         server.start();
     }

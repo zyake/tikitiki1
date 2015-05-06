@@ -14,10 +14,10 @@
                 LIMIT ${limit_lower}, 1000
             </when>
             <when test="50 &lt; condition &amp;&amp; condition &lt;= 75">
-                AND u.id = #{user_id} LIMIT 0, 300
+                AND u.id = #{user_id} LIMIT ${limit_lower}, 300
             </when>
             <when test="75 &lt; condition &amp;&amp; condition &lt;= 100">
-                 AND h.id = #{hotel_id} LIMIT 0, 300
+                 AND h.id = #{hotel_id} LIMIT ${limit_lower}, 300
             </when>
         </choose>
     </select>
